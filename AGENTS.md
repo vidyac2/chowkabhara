@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+
+- Game rules live as pure functions in `src/game/logic.ts` (covered by `logic.test.ts`); UI and timers stay in `src/game/useGame.ts` and components — keeps rules testable without React.
+- Paths for every seat are derived by rotating Red's path around the centre — one source of truth for board geometry.
+- Sound effects are synthesized with Web Audio in `src/game/sound.ts` — no audio assets to ship.

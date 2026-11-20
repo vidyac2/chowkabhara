@@ -12,24 +12,14 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The design lives in this file: oklch color tokens on the shadcn variables
- * (--background, --foreground, --primary, --secondary, --muted, --accent, ...) plus
- * new tokens as needed, font tokens, and custom styles and animations.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Chowka Bhara design system: warm paper, a yellow hand-drawn board with brown ink,
+ * cowrie shells and four bright player colours. All colours are oklch tokens.
  */
 
 @theme inline {
+  --font-sans: "Baloo 2", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Kalam", "Baloo 2", cursive;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -57,90 +47,75 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-overlay: var(--overlay);
+
+  --color-board: var(--board);
+  --color-board-inner: var(--board-inner);
+  --color-board-line: var(--board-line);
+  --color-board-edge: var(--board-edge);
+  --color-shell: var(--shell);
+  --color-shell-back: var(--shell-back);
+  --color-shell-shade: var(--shell-shade);
+
+  --color-player-red: var(--player-red);
+  --color-player-red-ink: var(--player-red-ink);
+  --color-player-blue: var(--player-blue);
+  --color-player-blue-ink: var(--player-blue-ink);
+  --color-player-green: var(--player-green);
+  --color-player-green-ink: var(--player-green-ink);
+  --color-player-white: var(--player-white);
+  --color-player-white-ink: var(--player-white-ink);
+
+  --shadow-chunky: 0 4px 0 0 var(--board-line);
+  --shadow-chunky-sm: 0 3px 0 0 var(--board-line);
+  --shadow-soft: 0 12px 30px -14px color-mix(in oklab, var(--board-line) 55%, transparent);
+
+  --animate-shell-tumble: shell-tumble 0.32s ease-in-out infinite alternate;
+  --animate-shell-land: shell-land 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  --animate-hop: hop 0.22s ease-out;
+  --animate-shake: shake 0.42s ease-in-out;
+  --animate-float: float 3.2s ease-in-out infinite;
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
+  --radius: 0.875rem;
+  --background: oklch(0.955 0.03 82);
+  --foreground: oklch(0.3 0.06 45);
+  --card: oklch(0.985 0.018 85);
+  --card-foreground: oklch(0.3 0.06 45);
+  --popover: oklch(0.985 0.018 85);
+  --popover-foreground: oklch(0.3 0.06 45);
+  --primary: oklch(0.56 0.16 38);
+  --primary-foreground: oklch(0.985 0.018 85);
+  --secondary: oklch(0.9 0.07 85);
+  --secondary-foreground: oklch(0.3 0.06 45);
+  --muted: oklch(0.92 0.035 80);
+  --muted-foreground: oklch(0.5 0.05 50);
+  --accent: oklch(0.86 0.13 88);
+  --accent-foreground: oklch(0.3 0.06 45);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
+  --destructive-foreground: oklch(0.985 0.018 85);
+  --border: oklch(0.82 0.05 70);
+  --input: oklch(0.82 0.05 70);
+  --ring: oklch(0.56 0.16 38);
+  --overlay: oklch(0.25 0.05 45 / 0.55);
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --board: oklch(0.87 0.15 90);
+  --board-inner: oklch(0.83 0.15 84);
+  --board-line: oklch(0.38 0.09 50);
+  --board-edge: oklch(0.64 0.12 68);
+  --shell: oklch(0.97 0.025 88);
+  --shell-back: oklch(0.8 0.07 70);
+  --shell-shade: oklch(0.62 0.08 55);
+
+  --player-red: oklch(0.6 0.21 28);
+  --player-red-ink: oklch(0.5 0.19 28);
+  --player-blue: oklch(0.56 0.17 255);
+  --player-blue-ink: oklch(0.46 0.16 255);
+  --player-green: oklch(0.62 0.16 150);
+  --player-green-ink: oklch(0.46 0.13 150);
+  --player-white: oklch(0.98 0.008 90);
+  --player-white-ink: oklch(0.45 0.03 70);
 }
 
 @layer base {
@@ -148,8 +123,145 @@
     border-color: var(--color-border);
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--color-background);
+    background-image: radial-gradient(
+      color-mix(in oklab, var(--board-line) 9%, transparent) 1px,
+      transparent 1.2px
+    );
+    background-size: 18px 18px;
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    overscroll-behavior: none;
+  }
+}
+
+/* The wooden-edged board surface. */
+@utility board-surface {
+  background-color: var(--board);
+  background-image:
+    radial-gradient(circle at 25% 15%, color-mix(in oklab, white 28%, transparent), transparent 55%),
+    radial-gradient(circle at 85% 90%, color-mix(in oklab, var(--board-line) 14%, transparent), transparent 55%);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 7px 0 var(--board-edge),
+    0 22px 40px -14px color-mix(in oklab, var(--board-line) 55%, transparent);
+}
+
+/* A paper card with an inked outline. */
+@utility paper-card {
+  background-color: var(--card);
+  border: 2px solid var(--board-line);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-chunky-sm);
+}
+
+/* Pawn token. Set the colour with pawn-red / pawn-blue / pawn-green / pawn-white. */
+@utility pawn {
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in oklab, var(--pawn) 40%, white) 0%,
+    var(--pawn) 48%,
+    color-mix(in oklab, var(--pawn) 72%, black) 100%
+  );
+  border: 2.5px solid var(--board-line);
+  box-shadow:
+    0 3px 0 color-mix(in oklab, var(--board-line) 85%, transparent),
+    inset 0 -3px 4px color-mix(in oklab, black 18%, transparent);
+}
+@utility pawn-red {
+  --pawn: var(--player-red);
+}
+@utility pawn-blue {
+  --pawn: var(--player-blue);
+}
+@utility pawn-green {
+  --pawn: var(--player-green);
+}
+@utility pawn-white {
+  --pawn: var(--player-white);
+}
+
+/* Pawns the current player may move. */
+@utility pawn-legal {
+  animation: pawn-bob 0.85s ease-in-out infinite;
+  cursor: pointer;
+}
+
+@keyframes pawn-bob {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow:
+      0 3px 0 var(--board-line),
+      0 0 0 3px var(--card),
+      0 0 0 6px var(--board-line);
+  }
+  50% {
+    transform: translateY(-12%) scale(1.06);
+    box-shadow:
+      0 6px 0 color-mix(in oklab, var(--board-line) 60%, transparent),
+      0 0 0 4px var(--card),
+      0 0 0 9px color-mix(in oklab, var(--board-line) 50%, transparent);
+  }
+}
+
+@keyframes shell-tumble {
+  0% {
+    transform: translateY(0) rotate(-25deg) scale(0.95);
+  }
+  100% {
+    transform: translateY(-14px) rotate(30deg) scale(1.05);
+  }
+}
+
+@keyframes shell-land {
+  0% {
+    transform: translateY(-18px) rotate(40deg) scale(0.8);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0) rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes hop {
+  0% {
+    transform: translateY(-30%) scale(1.1);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px) rotate(-0.6deg);
+  }
+  45% {
+    transform: translateX(6px) rotate(0.5deg);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-8px) rotate(var(--tilt, 0deg));
   }
 }

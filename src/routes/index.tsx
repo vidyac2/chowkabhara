@@ -1,23 +1,40 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { GameScreen } from "@/components/game/GameScreen";
+import { SetupScreen } from "@/components/game/SetupScreen";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Chowka Bhara — Shell-throwing board game for 2–4 players" },
+      {
+        name: "description",
+        content:
+          "Play Chowka Bhara, the classic Ludo-style race game with cowrie shells. 2 to 4 players, pass and play on one device.",
+      },
+      { property: "og:title", content: "Chowka Bhara — Shell-throwing board game" },
+      {
+        property: "og:description",
+        content: "Throw the cowries, capture your friends and race all four pawns to the centre.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [match, setMatch] = useState<{ players: number; round: number } | null>(null);
+
+  if (!match) return <SetupScreen onStart={(players) => setMatch({ players, round: 0 })} />;
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <GameScreen
+      key={match.round}
+      players={match.players}
+      onPlayAgain={() => setMatch({ ...match, round: match.round + 1 })}
+      onNewGame={() => setMatch(null)}
+    />
   );
 }
