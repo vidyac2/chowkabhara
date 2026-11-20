@@ -65,7 +65,7 @@ export function useGame(start: PlayState, settings: Settings, paused: boolean) {
   const lastEvent = useRef(ui.event?.id ?? 0);
   useEffect(() => {
     const e = ui.event;
-    if (!e || e.id === lastEvent.current) return;
+    if (!e || e.id === lastEvent.current) return undefined;
     lastEvent.current = e.id;
     if (e.kind === "capture") {
       sfx.capture();
@@ -77,6 +77,7 @@ export function useGame(start: PlayState, settings: Settings, paused: boolean) {
     if (e.kind === "out") sfx.out();
     if (e.kind === "win") sfx.win();
     if (e.kind === "nope") sfx.nope();
+    return undefined;
   }, [ui.event]);
 
   const roll = () => {
