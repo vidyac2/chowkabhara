@@ -5,33 +5,47 @@ export const PAWN_CLASS: Record<Color, string> = {
   red: "pawn-red",
   blue: "pawn-blue",
   green: "pawn-green",
-  white: "pawn-white",
+  yellow: "pawn-yellow",
 };
 
 export const INK_TEXT: Record<Color, string> = {
   red: "text-player-red-ink",
   blue: "text-player-blue-ink",
   green: "text-player-green-ink",
-  white: "text-player-white-ink",
+  yellow: "text-player-yellow-ink",
 };
 
 export const RING: Record<Color, string> = {
   red: "ring-player-red",
   blue: "ring-player-blue",
   green: "ring-player-green",
-  white: "ring-player-white-ink",
+  yellow: "ring-player-yellow",
+};
+
+export const BG: Record<Color, string> = {
+  red: "bg-player-red",
+  blue: "bg-player-blue",
+  green: "bg-player-green",
+  yellow: "bg-player-yellow",
 };
 
 export const CELL_TINT: Record<Color, string> = {
   red: "fill-player-red",
   blue: "fill-player-blue",
   green: "fill-player-green",
-  white: "fill-player-white",
+  yellow: "fill-player-yellow",
 };
 
 export const CELL_STROKE: Record<Color, string> = {
   red: "stroke-player-red",
   blue: "stroke-player-blue",
   green: "stroke-player-green",
-  white: "stroke-player-white-ink",
+  yellow: "stroke-player-yellow-ink",
+};
+
+export const BORDER: Record<Color, string> = {
+  red: "border-player-red",
+  blue: "border-player-blue",
+  green: "border-player-green",
+  yellow: "border-player-yellow-ink",
 };

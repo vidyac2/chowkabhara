@@ -1,193 +1,93 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  COLOR_NAMES,
-  FINISH,
-  HOME,
-  applyMove,
-  blockedByCaptureRule,
-  createGame,
-  currentColor,
-  grantsExtraTurn,
-  legalMoves,
-  nextTurn,
-  rollFromShells,
-  setPawn,
-  throwShells,
-  uniqueMoves,
-  type Color,
-  type GameState,
-  type Move,
-} from "./logic";
+import { advance, choices, choosePawn, landRoll, passTurn, startRoll, type PlayState } from "./engine";
+import { throwShells } from "./logic";
+import { STEP_MS, type Settings } from "./settings";
 import { sfx } from "./sound";
 
-export type Phase = "roll" | "rolling" | "move" | "passing" | "animating" | "won";
+const ROLL_MS = 1000;
+const PASS_MS = 1600;
+const AUTO_MS = 750;
 
-export interface PlayState {
-  game: GameState;
-  phase: Phase;
-  roll: number | null;
-  shells: boolean[];
-  message: string;
-  legal: Move[];
-  winner: Color | null;
-  shake: boolean;
-}
-
-const STEP_MS = 170;
-const ROLL_MS = 900;
-
-const name = (c: Color) => COLOR_NAMES[c];
-
-function initial(players: number): PlayState {
-  const game = createGame(players);
-  return {
-    game,
-    phase: "roll",
-    roll: null,
-    shells: [true, false, true, false],
-    message: `${name(currentColor(game))} goes first. Throw the shells!`,
-    legal: [],
-    winner: null,
-    shake: false,
-  };
-}
-
-function describeCaptures(captured: Color[]): string {
-  const counts = new Map<Color, number>();
-  captured.forEach((c) => counts.set(c, (counts.get(c) ?? 0) + 1));
-  return [...counts]
-    .map(([c, n]) => (n === 1 ? `${name(c)}'s pawn` : `${n} of ${name(c)}'s pawns`))
-    .join(" and ");
-}
-
-export function useGame(players: number) {
-  const [ui, setUi] = useState<PlayState>(() => initial(players));
+/**
+ * Drives the pure engine with timers. Each timer belongs to exactly one state and is cancelled
+ * as soon as the state changes or the game is paused, so nothing can fire into a later turn.
+ */
+export function useGame(start: PlayState, settings: Settings, paused: boolean) {
+  const [ui, setUi] = useState<PlayState>(start);
+  const [shake, setShake] = useState(false);
   const ref = useRef(ui);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const step = STEP_MS[settings.speed];
 
-  const update = (fn: (s: PlayState) => PlayState) => {
-    ref.current = fn(ref.current);
-    setUi(ref.current);
+  const apply = (fn: (s: PlayState) => PlayState) => {
+    const next = fn(ref.current);
+    if (next === ref.current) return false;
+    ref.current = next;
+    setUi(next);
+    return true;
   };
-  const later = (fn: () => void, ms: number) => {
-    timers.current.push(setTimeout(fn, ms));
-  };
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  // Scheduled transitions, one per state.
+  useEffect(() => {
+    if (paused) return;
+    let ms: number | null = null;
+    let run: (() => void) | null = null;
 
-  const finishTurn = (game: GameState, extra: boolean, prefix: string) => {
-    const lead = prefix ? `${prefix} ` : "";
-    if (extra) {
-      const who = name(currentColor(game));
-      update((s) => ({ ...s, game, phase: "roll", legal: [], message: `${lead}${who} throws again.` }));
-    } else {
-      const next = nextTurn(game);
-      const who = name(currentColor(next));
-      update((s) => ({ ...s, game: next, phase: "roll", legal: [], message: `${lead}${who}'s turn.` }));
+    if (ui.phase === "rolling") {
+      ms = ROLL_MS;
+      run = () => {
+        if (apply((s) => landRoll(s, throwShells()))) sfx.land();
+      };
+    } else if (ui.phase === "passing") {
+      ms = PASS_MS;
+      run = () => apply(passTurn);
+    } else if (ui.phase === "move" && settings.autoMove) {
+      const only = choices(ui);
+      if (only.length === 1 && only[0]) {
+        const from = only[0].from;
+        ms = AUTO_MS;
+        run = () => apply((s) => choosePawn(s, from));
+      }
+    } else if (ui.phase === "animating" && ui.anim) {
+      const a = ui.anim;
+      const done = a.shown >= a.path.length;
+      ms = a.shown === 0 ? 40 : done ? 140 : step;
+      run = () => {
+        apply(advance);
+        if (!done) sfx.step(a.shown);
+      };
     }
-  };
+    if (ms === null || !run) return;
+    const id = setTimeout(run, ms);
+    return () => clearTimeout(id);
+  }, [ui, paused, settings.autoMove, step]);
 
-  const resolve = (base: GameState, move: Move, roll: number) => {
-    const color = currentColor(base);
-    const who = name(color);
-    const result = applyMove(base, move);
-    let msg: string;
-    if (result.captured.length > 0) {
+  // Sound and shake for game events.
+  const lastEvent = useRef(ui.event?.id ?? 0);
+  useEffect(() => {
+    const e = ui.event;
+    if (!e || e.id === lastEvent.current) return;
+    lastEvent.current = e.id;
+    if (e.kind === "capture") {
       sfx.capture();
-      msg = `${who} captured ${describeCaptures(result.captured)}!`;
-      if (result.firstCapture) msg += " Inner ring unlocked.";
-      update((s) => ({ ...s, shake: true }));
-      later(() => update((s) => ({ ...s, shake: false })), 450);
-    } else if (move.to === FINISH) {
-      sfx.finish();
-      msg = `${who}'s pawn reached the centre!`;
-    } else if (move.from === HOME) {
-      msg = `${who} brought a pawn out.`;
-    } else {
-      msg = `${who} moved ${roll}.`;
+      setShake(true);
+      const id = setTimeout(() => setShake(false), 450);
+      return () => clearTimeout(id);
     }
+    if (e.kind === "finish") sfx.finish();
+    if (e.kind === "out") sfx.out();
+    if (e.kind === "win") sfx.win();
+    if (e.kind === "nope") sfx.nope();
+  }, [ui.event]);
 
-    if (result.won) {
-      sfx.win();
-      update((s) => ({
-        ...s,
-        game: result.state,
-        phase: "won",
-        winner: color,
-        legal: [],
-        message: `${who} wins the game!`,
-      }));
-      return;
-    }
-    finishTurn(result.state, grantsExtraTurn(roll) || result.captured.length > 0, msg);
+  const roll = () => {
+    if (paused) return;
+    if (apply(startRoll)) sfx.roll();
   };
 
   const choose = (from: number) => {
-    const s = ref.current;
-    if (s.phase !== "move" || s.roll === null) return;
-    const move = s.legal.find((m) => m.from === from);
-    if (!move) return;
-    const roll = s.roll;
-    const color = currentColor(s.game);
-    const base = s.game;
-    const steps: number[] = [];
-    if (move.from === HOME) steps.push(0);
-    else for (let p = move.from + 1; p <= move.to; p++) steps.push(p);
-
-    update((st) => ({ ...st, phase: "animating", legal: [] }));
-    steps.forEach((pos, i) =>
-      later(() => {
-        update((st) => ({ ...st, game: setPawn(st.game, color, move.pawn, pos) }));
-        sfx.step(i);
-      }, i * STEP_MS),
-    );
-    later(() => resolve(base, move, roll), steps.length * STEP_MS + 120);
+    if (paused) return;
+    if (apply((s) => choosePawn(s, from)) && ref.current.phase === "animating") sfx.tap();
   };
 
-  const roll = () => {
-    if (ref.current.phase !== "roll") return;
-    const who = name(currentColor(ref.current.game));
-    sfx.roll();
-    update((s) => ({ ...s, phase: "rolling", legal: [], message: `${who} throws the shells…` }));
-
-    later(() => {
-      const shells = throwShells();
-      const value = rollFromShells(shells);
-      const s = ref.current;
-      const moves = legalMoves(s.game, value);
-      const options = uniqueMoves(moves);
-      const extra = grantsExtraTurn(value);
-      sfx.land();
-
-      if (options.length === 0) {
-        const why = blockedByCaptureRule(s.game, value)
-          ? "capture a pawn first to enter the inner ring"
-          : "no move possible";
-        update((st) => ({
-          ...st,
-          phase: "passing",
-          roll: value,
-          shells,
-          legal: [],
-          message: `${who} rolled ${value} — ${why}.`,
-        }));
-        later(() => finishTurn(ref.current.game, extra, ""), 1500);
-        return;
-      }
-
-      const hint = options.length === 1 ? "" : " Tap a glowing pawn.";
-      update((st) => ({
-        ...st,
-        phase: "move",
-        roll: value,
-        shells,
-        legal: moves,
-        message: `${who} rolled ${value}.${extra ? " Extra throw!" : ""}${hint}`,
-      }));
-      const only = options[0];
-      if (options.length === 1 && only) later(() => choose(only.from), 700);
-    }, ROLL_MS);
-  };
-
-  return { ui, roll, choose };
+  return { ui, shake, step, roll, choose };
 }

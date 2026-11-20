@@ -5,40 +5,19 @@ import { PAWN_CLASS } from "./player-styles";
 interface PawnProps {
   color: Color;
   count?: number;
-  legal?: boolean;
   className?: string;
-  onClick?: () => void;
-  label?: string;
 }
 
-export function Pawn({ color, count = 1, legal = false, className, onClick, label }: PawnProps) {
-  const body = (
-    <>
-      <span className="absolute left-[22%] top-[16%] h-[22%] w-[22%] rounded-full bg-card opacity-60" />
+/** The pawn artwork: a domed token with a shine and an optional stack count. */
+export function Pawn({ color, count = 1, className }: PawnProps) {
+  return (
+    <span className={cn("pawn relative block aspect-square", PAWN_CLASS[color], className)} aria-hidden>
+      <span className="absolute left-[20%] top-[14%] h-[24%] w-[30%] -rotate-[25deg] rounded-full bg-card opacity-60" />
       {count > 1 && (
-        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-card bg-foreground px-1 text-[11px] font-bold leading-none text-background">
+        <span className="absolute -right-[22%] -top-[22%] flex aspect-square min-w-[55%] items-center justify-center rounded-full border-2 border-card bg-foreground px-0.5 text-[clamp(9px,1.6vw,13px)] font-bold leading-none text-background">
           {count}
         </span>
       )}
-    </>
-  );
-  const cls = cn("pawn relative block aspect-square", PAWN_CLASS[color], legal && "pawn-legal", className);
-
-  if (legal && onClick) {
-    return (
-      <button
-        type="button"
-        aria-label={label ?? `Move ${color} pawn`}
-        className={cn(cls, "touch-manipulation focus-visible:outline-none")}
-        onClick={onClick}
-      >
-        {body}
-      </button>
-    );
-  }
-  return (
-    <span className={cls} aria-hidden>
-      {body}
     </span>
   );
 }

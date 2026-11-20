@@ -1,15 +1,15 @@
 // Pure Chowka Bhara rules. No React, no timers — everything here is unit tested.
 
-export type Color = "red" | "green" | "blue" | "white";
+export type Color = "red" | "green" | "blue" | "yellow";
 
 /** Seats in anticlockwise turn order: bottom, right, top, left. */
-export const SEAT_ORDER: Color[] = ["red", "green", "blue", "white"];
+export const SEAT_ORDER: Color[] = ["red", "green", "blue", "yellow"];
 
 export const COLOR_NAMES: Record<Color, string> = {
   red: "Red",
   green: "Green",
   blue: "Blue",
-  white: "White",
+  yellow: "Yellow",
 };
 
 export const PAWNS_PER_PLAYER = 4;
@@ -58,6 +58,7 @@ export interface GameState {
   players: Color[];
   pawns: Record<Color, number[]>;
   hasCaptured: Record<Color, boolean>;
+  captures: Record<Color, number>; // opponent pawns sent home, for the scoreboard
   turn: number; // index into players
 }
 
@@ -77,11 +78,13 @@ export function createGame(playerCount: number): GameState {
   const players = playersFor(playerCount);
   const pawns = {} as Record<Color, number[]>;
   const hasCaptured = {} as Record<Color, boolean>;
+  const captures = {} as Record<Color, number>;
   for (const color of SEAT_ORDER) {
     pawns[color] = players.includes(color) ? Array(PAWNS_PER_PLAYER).fill(HOME) : [];
     hasCaptured[color] = false;
+    captures[color] = 0;
   }
-  return { players, pawns, hasCaptured, turn: 0 };
+  return { players, pawns, hasCaptured, captures, turn: 0 };
 }
 
 export function currentColor(state: GameState): Color {
@@ -174,7 +177,13 @@ export function applyMove(state: GameState, move: Move): MoveResult {
   }
 
   const firstCapture = captured.length > 0 && !state.hasCaptured[color];
-  if (captured.length > 0) next = { ...next, hasCaptured: { ...next.hasCaptured, [color]: true } };
+  if (captured.length > 0) {
+    next = {
+      ...next,
+      hasCaptured: { ...next.hasCaptured, [color]: true },
+      captures: { ...next.captures, [color]: next.captures[color] + captured.length },
+    };
+  }
   const won = next.pawns[color].every((pos) => pos === FINISH);
   return { state: next, captured, firstCapture, won };
 }
@@ -187,3 +196,21 @@ export const finishedCount = (state: GameState, color: Color) =>
   state.pawns[color].filter((p) => p === FINISH).length;
 export const waitingCount = (state: GameState, color: Color) =>
   state.pawns[color].filter((p) => p === HOME).length;
+
+/** Plain-language reason a pawn at `from` cannot use this roll, or null when it can move. */
+export function whyCannotMove(state: GameState, from: number, roll: number): string | null {
+  const color = currentColor(state);
+  if (!state.pawns[color].includes(from)) return "That isn't one of your pawns.";
+  if (from === FINISH) return "That pawn has already reached the centre.";
+  if (from === HOME) return canLeaveHome(roll) ? null : "Pawns only come out on a 4 or an 8.";
+  const to = from + roll;
+  if (to > FINISH) return `That pawn needs exactly ${FINISH - from} to reach the centre.`;
+  if (!state.hasCaptured[color] && to >= INNER_START) return "Capture a pawn first to enter the inner ring.";
+  return null;
+}
+
+/** How far round the board a player has got, 0–100, for the scoreboard. */
+export function progress(state: GameState, color: Color): number {
+  const steps = state.pawns[color].reduce((sum, p) => sum + (p === HOME ? 0 : p + 1), 0);
+  return Math.round((steps / ((FINISH + 1) * PAWNS_PER_PLAYER)) * 100);
+}

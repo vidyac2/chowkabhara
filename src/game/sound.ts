@@ -78,13 +78,27 @@ export const sfx = {
     click(0, 600, 0.5);
     tone(196, 0.25, { type: "square", gain: 0.05, when: 0.12 });
   },
+  /** Pawn placed on its start square. */
+  out() {
+    tone(392, 0.1, { type: "triangle", gain: 0.12 });
+    tone(587, 0.14, { type: "triangle", gain: 0.12, when: 0.08 });
+  },
+  /** That pawn can't move. */
+  nope() {
+    tone(220, 0.12, { type: "square", gain: 0.04 });
+    tone(185, 0.14, { type: "square", gain: 0.04, when: 0.1 });
+  },
+  tap() {
+    click(0, 1800, 0.18);
+  },
   finish() {
     tone(660, 0.12, { type: "triangle", gain: 0.12 });
     tone(990, 0.2, { type: "triangle", gain: 0.12, when: 0.1 });
   },
   win() {
-    [523, 659, 784, 1047, 784, 1047].forEach((f, i) =>
-      tone(f, 0.22, { type: "triangle", gain: 0.13, when: i * 0.12 }),
+    [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) =>
+      tone(f, i === 6 ? 0.6 : 0.22, { type: "triangle", gain: 0.13, when: i * 0.12 }),
     );
+    [262, 330, 392].forEach((f) => tone(f, 0.9, { type: "sine", gain: 0.06, when: 0.72 }));
   },
 };

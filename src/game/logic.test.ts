@@ -40,7 +40,7 @@ describe("leaving home", () => {
     expect(startCell("red")).toEqual([4, 2]);
     expect(startCell("green")).toEqual([2, 4]);
     expect(startCell("blue")).toEqual([0, 2]);
-    expect(startCell("white")).toEqual([2, 0]);
+    expect(startCell("yellow")).toEqual([2, 0]);
   });
 });
 

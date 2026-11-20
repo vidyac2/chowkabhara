@@ -63,18 +63,24 @@
   --color-player-blue-ink: var(--player-blue-ink);
   --color-player-green: var(--player-green);
   --color-player-green-ink: var(--player-green-ink);
-  --color-player-white: var(--player-white);
-  --color-player-white-ink: var(--player-white-ink);
+  --color-player-yellow: var(--player-yellow);
+  --color-player-yellow-ink: var(--player-yellow-ink);
+  --color-wood: var(--wood);
+  --color-wood-light: var(--wood-light);
+  --color-wood-dark: var(--wood-dark);
 
   --shadow-chunky: 0 4px 0 0 var(--board-line);
   --shadow-chunky-sm: 0 3px 0 0 var(--board-line);
   --shadow-soft: 0 12px 30px -14px color-mix(in oklab, var(--board-line) 55%, transparent);
 
-  --animate-shell-tumble: shell-tumble 0.32s ease-in-out infinite alternate;
+  --animate-shell-tumble: shell-flip 0.42s ease-in-out infinite;
   --animate-shell-land: shell-land 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
   --animate-hop: hop 0.22s ease-out;
   --animate-shake: shake 0.42s ease-in-out;
   --animate-float: float 3.2s ease-in-out infinite;
+  --animate-burst: burst 0.7s ease-out forwards;
+  --animate-pop-in: pop-in 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  --animate-nope: nope 0.35s ease-in-out;
 }
 
 :root {
@@ -114,8 +120,12 @@
   --player-blue-ink: oklch(0.46 0.16 255);
   --player-green: oklch(0.62 0.16 150);
   --player-green-ink: oklch(0.46 0.13 150);
-  --player-white: oklch(0.98 0.008 90);
-  --player-white-ink: oklch(0.45 0.03 70);
+  --player-yellow: oklch(0.8 0.165 72);
+  --player-yellow-ink: oklch(0.55 0.13 62);
+
+  --wood: oklch(0.5 0.1 52);
+  --wood-light: oklch(0.62 0.11 60);
+  --wood-dark: oklch(0.34 0.07 45);
 }
 
 @layer base {
@@ -160,18 +170,22 @@
   box-shadow: var(--shadow-chunky-sm);
 }
 
-/* Pawn token. Set the colour with pawn-red / pawn-blue / pawn-green / pawn-white. */
+/* Pawn token. Set the colour with pawn-red / pawn-blue / pawn-green / pawn-yellow. */
 @utility pawn {
   border-radius: 9999px;
-  background: radial-gradient(
-    circle at 35% 30%,
-    color-mix(in oklab, var(--pawn) 40%, white) 0%,
-    var(--pawn) 48%,
-    color-mix(in oklab, var(--pawn) 72%, black) 100%
-  );
+  background:
+    radial-gradient(circle at 50% 50%, transparent 46%, color-mix(in oklab, var(--pawn) 70%, black) 48%, transparent 52%),
+    radial-gradient(
+      circle at 35% 28%,
+      color-mix(in oklab, var(--pawn) 35%, white) 0%,
+      var(--pawn) 45%,
+      color-mix(in oklab, var(--pawn) 70%, black) 100%
+    );
   border: 2.5px solid var(--board-line);
   box-shadow:
-    0 3px 0 color-mix(in oklab, var(--board-line) 85%, transparent),
+    0 3px 0 color-mix(in oklab, var(--pawn) 55%, black),
+    0 4px 0 var(--board-line),
+    0 7px 8px -2px color-mix(in oklab, black 35%, transparent),
     inset 0 -3px 4px color-mix(in oklab, black 18%, transparent);
 }
 @utility pawn-red {
@@ -183,31 +197,153 @@
 @utility pawn-green {
   --pawn: var(--player-green);
 }
-@utility pawn-white {
-  --pawn: var(--player-white);
+@utility pawn-yellow {
+  --pawn: var(--player-yellow);
 }
 
-/* Pawns the current player may move. */
+/* A pawn the current player may move: the tap target stays still, only the art bobs. */
 @utility pawn-legal {
-  animation: pawn-bob 0.85s ease-in-out infinite;
   cursor: pointer;
+  & .pawn {
+    animation: pawn-bob 0.85s ease-in-out infinite;
+  }
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -14%;
+    border-radius: 9999px;
+    border: 3px solid var(--card);
+    box-shadow:
+      0 0 0 3px var(--board-line),
+      0 0 18px 4px color-mix(in oklab, var(--card) 80%, transparent);
+    animation: legal-ring 1.1s ease-in-out infinite;
+    pointer-events: none;
+  }
 }
 
 @keyframes pawn-bob {
   0%,
   100% {
     transform: translateY(0) scale(1);
-    box-shadow:
-      0 3px 0 var(--board-line),
-      0 0 0 3px var(--card),
-      0 0 0 6px var(--board-line);
   }
   50% {
-    transform: translateY(-12%) scale(1.06);
-    box-shadow:
-      0 6px 0 color-mix(in oklab, var(--board-line) 60%, transparent),
-      0 0 0 4px var(--card),
-      0 0 0 9px color-mix(in oklab, var(--board-line) 50%, transparent);
+    transform: translateY(-14%) scale(1.06);
+  }
+}
+
+@keyframes legal-ring {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.65;
+  }
+}
+
+/* The wooden 3D frame around the board. */
+@utility board-frame {
+  border-radius: 6%;
+  background:
+    linear-gradient(160deg, color-mix(in oklab, var(--wood-light) 90%, white) 0%, var(--wood) 45%, var(--wood-dark) 100%);
+  box-shadow:
+    inset 0 2px 0 color-mix(in oklab, white 35%, transparent),
+    inset 0 -4px 0 color-mix(in oklab, black 25%, transparent),
+    0 10px 0 var(--wood-dark),
+    0 30px 45px -18px color-mix(in oklab, black 55%, transparent);
+}
+
+/* Fit the board to the screen: full width on phones, limited by height beside the panel on wider screens. */
+@layer components {
+  .game-board-size {
+    width: min(100%, 560px, calc(100dvh - 15rem));
+    min-width: min(100%, 300px);
+  }
+  @media (min-width: 48rem) {
+    .game-board-size {
+      width: min(660px, calc(100dvh - 6rem), calc(100vw - 24rem));
+      min-width: 320px;
+    }
+  }
+}
+
+@keyframes burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes nope {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-12%);
+  }
+  75% {
+    transform: translateX(12%);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift, 0px), 110vh, 0) rotate(var(--spin, 540deg));
+    opacity: 0.9;
+  }
+}
+
+@keyframes turn-glow {
+  0%,
+  100% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.35;
+  }
+}
+
+/* Shells mid-air: flip end over end. */
+@keyframes shell-flip {
+  0% {
+    transform: translateY(0) rotateX(0deg) rotate(-20deg);
+  }
+  50% {
+    transform: translateY(-22px) rotateX(180deg) rotate(15deg);
+  }
+  100% {
+    transform: translateY(0) rotateX(360deg) rotate(-20deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
